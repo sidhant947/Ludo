@@ -9,13 +9,17 @@ import 'ludo_board_widget.dart';
 class LudoGameScreen extends StatefulWidget {
   const LudoGameScreen({
     super.key,
-    required this.playerCount,
-    required this.vsBot,
+    this.playerCount,
+    this.vsBot,
+    this.humanCount,
+    this.botCount,
     this.controller,
   });
 
-  final int playerCount;
-  final bool vsBot;
+  final int? playerCount;
+  final bool? vsBot;
+  final int? humanCount;
+  final int? botCount;
   final LudoGameController? controller;
 
   @override
@@ -36,6 +40,8 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
     )..repeat(reverse: true);
 
     _controller = widget.controller ?? LudoGameController(
+      humanCount: widget.humanCount,
+      botCount: widget.botCount,
       playerCount: widget.playerCount,
       vsBot: widget.vsBot,
     );
@@ -459,22 +465,50 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
 
     final isCurrent = _controller.currentPlayer == player;
     final isHuman = _controller.playerTypes[player] == LudoPlayerType.human;
+    final isBot = _controller.playerTypes[player] == LudoPlayerType.bot;
     final canRoll = isCurrent && _controller.canRoll && !_controller.isRolling && isHuman && !_controller.isGameOver;
     final isRollingNow = isCurrent && _controller.isRolling;
     final diceVal = _controller.getDiceFor(player);
+
+    final diceButton = _buildDiceButton(
+      player: player,
+      value: diceVal,
+      isCurrent: isCurrent,
+      canRoll: canRoll,
+      isRolling: isRollingNow,
+      colors: colors,
+    );
 
     return SizedBox(
       width: width,
       height: 50,
       child: Center(
-        child: _buildDiceButton(
-          player: player,
-          value: diceVal,
-          isCurrent: isCurrent,
-          canRoll: canRoll,
-          isRolling: isRollingNow,
-          colors: colors,
-        ),
+        child: isBot
+            ? Stack(
+                clipBehavior: Clip.none,
+                alignment: Alignment.center,
+                children: [
+                  diceButton,
+                  Positioned(
+                    right: -4,
+                    top: -4,
+                    child: Container(
+                      padding: const EdgeInsets.all(2.5),
+                      decoration: BoxDecoration(
+                        color: colors.card,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: colors.border, width: 1.5),
+                      ),
+                      child: Icon(
+                        Icons.smart_toy_rounded,
+                        size: 11,
+                        color: colors.textMuted,
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            : diceButton,
       ),
     );
   }

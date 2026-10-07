@@ -6,12 +6,18 @@ import '../services/haptic_service.dart';
 
 class LudoGameController extends ChangeNotifier {
   LudoGameController({
-    required int playerCount,
-    required bool vsBot,
+    int? humanCount,
+    int? botCount,
+    int? playerCount,
+    bool? vsBot,
   }) {
-    _initGame(playerCount, vsBot);
+    final humans = humanCount ?? (vsBot == true ? 1 : (playerCount ?? 4));
+    final bots = botCount ?? (vsBot == true ? (playerCount ?? 4) - 1 : 0);
+    _initGame(humans, bots);
   }
 
+  late int humanCount;
+  late int botCount;
   final Random _random = Random();
   late List<LudoPlayer> activePlayers;
   late Map<LudoPlayer, LudoPlayerType> playerTypes;
@@ -42,7 +48,10 @@ class LudoGameController extends ChangeNotifier {
 
   int getDiceFor(LudoPlayer player) => playerDice[player] ?? 1;
 
-  void _initGame(int count, bool vsBot) {
+  void _initGame(int humans, int bots) {
+    humanCount = humans;
+    botCount = bots;
+    final count = (humans + bots).clamp(2, 4);
     if (count == 2) {
       activePlayers = [LudoPlayer.red, LudoPlayer.yellow];
     } else if (count == 3) {
@@ -54,11 +63,7 @@ class LudoGameController extends ChangeNotifier {
     playerTypes = {};
     for (int i = 0; i < activePlayers.length; i++) {
       final p = activePlayers[i];
-      if (vsBot) {
-        playerTypes[p] = i == 0 ? LudoPlayerType.human : LudoPlayerType.bot;
-      } else {
-        playerTypes[p] = LudoPlayerType.human;
-      }
+      playerTypes[p] = i < humans ? LudoPlayerType.human : LudoPlayerType.bot;
     }
 
     allTokens = [];
@@ -83,10 +88,10 @@ class LudoGameController extends ChangeNotifier {
     _checkBotTurn();
   }
 
-  void resetGame({int? playerCount, bool? vsBot}) {
-    final count = playerCount ?? activePlayers.length;
-    final bot = vsBot ?? (playerTypes[activePlayers[0]] == LudoPlayerType.human && playerTypes[activePlayers[1]] == LudoPlayerType.bot);
-    _initGame(count, bot);
+  void resetGame({int? humanCount, int? botCount, int? playerCount, bool? vsBot}) {
+    final humans = humanCount ?? (vsBot != null ? (vsBot ? 1 : (playerCount ?? this.humanCount)) : this.humanCount);
+    final bots = botCount ?? (vsBot != null ? (vsBot ? (playerCount ?? (this.humanCount + this.botCount)) - 1 : 0) : this.botCount);
+    _initGame(humans, bots);
     notifyListeners();
   }
 

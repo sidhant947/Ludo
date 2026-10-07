@@ -1,6 +1,6 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../../models/ludo_models.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/tangible_widgets.dart';
 import '../../game/ludo/ludo_game_screen.dart';
@@ -14,14 +14,22 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  int _selectedCount = 4;
-  bool _vsBot = true;
+  int _humanCount = 1;
+  int _botCount = 3;
 
-  static const _playerColorsByCount = <int, List<LudoPlayer>>{
-    2: [LudoPlayer.red, LudoPlayer.yellow],
-    3: [LudoPlayer.red, LudoPlayer.green, LudoPlayer.yellow],
-    4: [LudoPlayer.red, LudoPlayer.green, LudoPlayer.yellow, LudoPlayer.blue],
-  };
+  void _setHumanCount(int count) {
+    setState(() {
+      _humanCount = count;
+      _botCount = _botCount.clamp(math.max(0, 2 - count), 4 - count);
+    });
+  }
+
+  void _setBotCount(int count) {
+    setState(() {
+      _botCount = count;
+      _humanCount = _humanCount.clamp(math.max(1, 2 - count), 4 - count);
+    });
+  }
 
   Future<void> _openUrl(String urlString) async {
     final uri = Uri.parse(urlString);
@@ -37,8 +45,8 @@ class _HomeViewState extends State<HomeView> {
       context,
       MaterialPageRoute(
         builder: (context) => LudoGameScreen(
-          playerCount: _selectedCount,
-          vsBot: _vsBot,
+          humanCount: _humanCount,
+          botCount: _botCount,
         ),
       ),
     );
@@ -110,7 +118,7 @@ class _HomeViewState extends State<HomeView> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
-                              'PLAYERS',
+                              'HUMANS',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w800,
@@ -120,54 +128,35 @@ class _HomeViewState extends State<HomeView> {
                             ),
                             const SizedBox(height: 10),
                             Row(
-                              children: [2, 3, 4].map((count) {
-                                final isSelected = _selectedCount == count;
-                                final players = _playerColorsByCount[count]!;
+                              children: [1, 2, 3, 4].map((count) {
+                                final isSelected = _humanCount == count;
 
                                 return Expanded(
                                   child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                                    padding: const EdgeInsets.symmetric(horizontal: 3),
                                     child: TangibleButton(
-                                      height: 66,
-                                      padding: const EdgeInsets.symmetric(vertical: 4),
+                                      height: 58,
+                                      padding: EdgeInsets.zero,
                                       color: isSelected ? colors.mint : colors.canvas,
                                       bevelColor: isSelected ? colors.mintBevel : colors.bevel,
                                       elevation: isSelected ? 4 : 2,
-                                      onPressed: () {
-                                        setState(() {
-                                          _selectedCount = count;
-                                        });
-                                      },
-                                      child: Column(
+                                      onPressed: () => _setHumanCount(count),
+                                      child: Row(
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
+                                          Icon(
+                                            Icons.person_rounded,
+                                            size: 16,
+                                            color: isSelected ? colors.mintText : colors.textMuted,
+                                          ),
+                                          const SizedBox(width: 4),
                                           Text(
-                                            '${count}P',
-                                            maxLines: 1,
+                                            '$count',
                                             style: TextStyle(
-                                              fontSize: 17,
+                                              fontSize: 16,
                                               fontWeight: FontWeight.w900,
                                               color: isSelected ? colors.mintText : colors.text,
                                             ),
-                                          ),
-                                          const SizedBox(height: 5),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: players.map((p) {
-                                              return Container(
-                                                margin: const EdgeInsets.symmetric(horizontal: 2),
-                                                width: 7,
-                                                height: 7,
-                                                decoration: BoxDecoration(
-                                                  color: p.color,
-                                                  shape: BoxShape.circle,
-                                                  border: Border.all(
-                                                    color: isSelected ? Colors.white.withValues(alpha: 0.8) : colors.border,
-                                                    width: 1,
-                                                  ),
-                                                ),
-                                              );
-                                            }).toList(),
                                           ),
                                         ],
                                       ),
@@ -178,7 +167,7 @@ class _HomeViewState extends State<HomeView> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'GAME MODE',
+                              'BOTS',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w800,
@@ -188,77 +177,42 @@ class _HomeViewState extends State<HomeView> {
                             ),
                             const SizedBox(height: 10),
                             Row(
-                              children: [
-                                Expanded(
-                                  child: TangibleButton(
-                                    height: 66,
-                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                                    color: !_vsBot ? colors.mint : colors.canvas,
-                                    bevelColor: !_vsBot ? colors.mintBevel : colors.bevel,
-                                    elevation: !_vsBot ? 4 : 2,
-                                    onPressed: () {
-                                      setState(() {
-                                        _vsBot = false;
-                                      });
-                                    },
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.people_alt_rounded,
-                                          size: 22,
-                                          color: !_vsBot ? colors.mintText : colors.text,
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'Pass & Play',
-                                          maxLines: 1,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w800,
-                                            color: !_vsBot ? colors.mintText : colors.text,
+                              children: [0, 1, 2, 3].map((count) {
+                                final isSelected = _botCount == count;
+
+                                return Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                                    child: TangibleButton(
+                                      height: 58,
+                                      padding: EdgeInsets.zero,
+                                      color: isSelected ? colors.mint : colors.canvas,
+                                      bevelColor: isSelected ? colors.mintBevel : colors.bevel,
+                                      elevation: isSelected ? 4 : 2,
+                                      onPressed: () => _setBotCount(count),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.smart_toy_rounded,
+                                            size: 16,
+                                            color: isSelected ? colors.mintText : colors.textMuted,
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '$count',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w900,
+                                              color: isSelected ? colors.mintText : colors.text,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: TangibleButton(
-                                    height: 66,
-                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                                    color: _vsBot ? colors.mint : colors.canvas,
-                                    bevelColor: _vsBot ? colors.mintBevel : colors.bevel,
-                                    elevation: _vsBot ? 4 : 2,
-                                    onPressed: () {
-                                      setState(() {
-                                        _vsBot = true;
-                                      });
-                                    },
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.smart_toy_rounded,
-                                          size: 22,
-                                          color: _vsBot ? colors.mintText : colors.text,
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'With Bots',
-                                          maxLines: 1,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w800,
-                                            color: _vsBot ? colors.mintText : colors.text,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
+                                );
+                              }).toList(),
                             ),
                           ],
                         ),
