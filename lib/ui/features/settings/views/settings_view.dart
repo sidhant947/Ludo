@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../main.dart';
+import '../../../../services/audio_service.dart';
 import '../../../../services/haptic_service.dart';
 import '../../../../services/storage_service.dart';
 import '../../../core/theme/app_theme.dart';
@@ -15,12 +16,14 @@ class SettingsView extends StatefulWidget {
 class _SettingsViewState extends State<SettingsView> {
   ThemeMode _currentMode = ThemeMode.system;
   bool _hapticEnabled = true;
+  bool _soundEnabled = true;
 
   @override
   void initState() {
     super.initState();
     _currentMode = themeModeNotifier.value;
     _hapticEnabled = HapticService.isEnabled;
+    _soundEnabled = AudioService.isEnabled;
   }
 
   Future<void> _updateTheme(ThemeMode mode) async {
@@ -37,6 +40,13 @@ class _SettingsViewState extends State<SettingsView> {
       _hapticEnabled = enabled;
     });
     await HapticService.setEnabled(enabled);
+  }
+
+  Future<void> _toggleSound(bool enabled) async {
+    setState(() {
+      _soundEnabled = enabled;
+    });
+    await AudioService.setEnabled(enabled);
   }
 
   @override
@@ -206,6 +216,68 @@ class _SettingsViewState extends State<SettingsView> {
                           fontSize: 14,
                           fontWeight: FontWeight.w900,
                           color: _hapticEnabled ? colors.mintText : colors.textMuted,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              TangibleCard(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: colors.butter.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(
+                        Icons.volume_up_rounded,
+                        color: colors.butterText,
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Sound',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: colors.text,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Music and dice audio',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: colors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    TangibleButton(
+                      width: 76,
+                      height: 44,
+                      padding: EdgeInsets.zero,
+                      color: _soundEnabled ? colors.mint : colors.canvas,
+                      bevelColor: _soundEnabled ? colors.mintBevel : colors.bevel,
+                      elevation: 3,
+                      onPressed: () => _toggleSound(!_soundEnabled),
+                      child: Text(
+                        _soundEnabled ? 'ON' : 'OFF',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          color: _soundEnabled ? colors.mintText : colors.textMuted,
                         ),
                       ),
                     ),

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../../logic/ludo_game_controller.dart';
 import '../../../../models/ludo_models.dart';
+import '../../../../services/audio_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/tangible_widgets.dart';
 import 'ludo_board_widget.dart';
@@ -46,6 +47,7 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
       vsBot: widget.vsBot,
     );
     _controller.addListener(_onControllerUpdate);
+    AudioService.setGameplay(true);
   }
 
   void _onControllerUpdate() {
@@ -67,6 +69,7 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
     if (widget.controller == null) {
       _controller.dispose();
     }
+    AudioService.setGameplay(false);
     super.dispose();
   }
 
@@ -466,17 +469,24 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
     final isCurrent = _controller.currentPlayer == player;
     final isHuman = _controller.playerTypes[player] == LudoPlayerType.human;
     final isBot = _controller.playerTypes[player] == LudoPlayerType.bot;
-    final canRoll = isCurrent && _controller.canRoll && !_controller.isRolling && isHuman && !_controller.isGameOver;
+    final canRoll = isCurrent &&
+        _controller.canRoll &&
+        !_controller.isRolling &&
+        !_controller.isMoving &&
+        isHuman &&
+        !_controller.isGameOver;
     final isRollingNow = isCurrent && _controller.isRolling;
     final diceVal = _controller.getDiceFor(player);
 
-    final diceButton = _buildDiceButton(
+    final diceButton = _DiceButton(
       player: player,
       value: diceVal,
       isCurrent: isCurrent,
       canRoll: canRoll,
       isRolling: isRollingNow,
       colors: colors,
+      pulseAnimation: _pulseController,
+      onTap: canRoll ? () => _controller.rollDice() : null,
     );
 
     return SizedBox(
@@ -513,14 +523,79 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
     );
   }
 
-  Widget _buildDiceButton({
-    required LudoPlayer player,
-    required int value,
-    required bool isCurrent,
-    required bool canRoll,
-    required bool isRolling,
-    required AppColors colors,
-  }) {
+}
+
+class _DiceButton extends StatefulWidget {
+  const _DiceButton({
+    required this.player,
+    required this.value,
+    required this.isCurrent,
+    required this.canRoll,
+    required this.isRolling,
+    required this.colors,
+    required this.pulseAnimation,
+    required this.onTap,
+  });
+
+  final LudoPlayer player;
+  final int value;
+  final bool isCurrent;
+  final bool canRoll;
+  final bool isRolling;
+  final AppColors colors;
+  final Animation<double> pulseAnimation;
+  final VoidCallback? onTap;
+
+  @override
+  State<_DiceButton> createState() => _DiceButtonState();
+}
+
+class _DiceButtonState extends State<_DiceButton> with TickerProviderStateMixin {
+  late AnimationController _tumbleController;
+  late AnimationController _settleController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tumbleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 90),
+    );
+    _settleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 240),
+    );
+    if (widget.isRolling) {
+      _tumbleController.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _DiceButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.isRolling && widget.isRolling) {
+      _settleController.reset();
+      _tumbleController.repeat(reverse: true);
+    } else if (oldWidget.isRolling && !widget.isRolling) {
+      _tumbleController.stop();
+      _tumbleController.reset();
+      _settleController.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _tumbleController.dispose();
+    _settleController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = widget.colors;
+    final isCurrent = widget.isCurrent;
+    final player = widget.player;
+
     final diceWidget = Container(
       width: 48,
       height: 48,
@@ -546,38 +621,52 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
           ),
         ),
         child: Center(
-          child: isRolling
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-              : _DiceFace(
-                  value: value,
-                  dotColor: isCurrent ? player.textColor : colors.diceInactiveDot,
-                ),
+          child: _DiceFace(
+            value: widget.value,
+            dotColor: isCurrent ? player.textColor : colors.diceInactiveDot,
+          ),
         ),
       ),
     );
 
     return GestureDetector(
-      onTap: canRoll ? () => _controller.rollDice() : null,
+      onTap: widget.onTap,
       behavior: HitTestBehavior.opaque,
-      child: canRoll
-          ? AnimatedBuilder(
-              animation: _pulseController,
-              builder: (context, child) {
-                final scale = 1.0 + (_pulseController.value * 0.12);
-                return Transform.scale(
-                  scale: scale,
-                  child: diceWidget,
-                );
-              },
-            )
-          : diceWidget,
+      child: AnimatedBuilder(
+        animation: Listenable.merge([
+          widget.pulseAnimation,
+          _tumbleController,
+          _settleController,
+        ]),
+        builder: (context, child) {
+          double scale = 1.0;
+          double rotation = 0.0;
+          double offsetY = 0.0;
+
+          if (widget.isRolling) {
+            final t = _tumbleController.value;
+            scale = 1.12 + (t * 0.08);
+            rotation = (t - 0.5) * 0.35;
+            offsetY = -5.0 * t;
+          } else if (_settleController.isAnimating) {
+            final settleCurve = Curves.easeOutBack.transform(_settleController.value);
+            scale = 1.0 + ((1.0 - settleCurve) * 0.22);
+          } else if (widget.canRoll) {
+            scale = 1.0 + (widget.pulseAnimation.value * 0.12);
+          }
+
+          return Transform.translate(
+            offset: Offset(0, offsetY),
+            child: Transform.rotate(
+              angle: rotation,
+              child: Transform.scale(
+                scale: scale,
+                child: diceWidget,
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

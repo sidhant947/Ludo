@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class StorageService {
   static const String _keyThemeMode = 'ludo_theme_mode';
   static const String _keyHapticFeedback = 'ludo_haptic_feedback';
+  static const String _keySoundEnabled = 'ludo_sound_enabled';
 
   static Future<ThemeMode> getThemeMode() async {
     final prefs = await SharedPreferences.getInstance();
@@ -33,5 +34,15 @@ class StorageService {
   static Future<void> setHapticFeedback(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyHapticFeedback, enabled);
+  }
+
+  static Future<bool> getSoundEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keySoundEnabled) ?? true;
+  }
+
+  static Future<void> setSoundEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keySoundEnabled, enabled);
   }
 }

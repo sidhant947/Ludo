@@ -42,7 +42,8 @@ class _LudoBoardWidgetState extends State<LudoBoardWidget> with SingleTickerProv
     if (widget.controller.currentPlayer == player &&
         widget.controller.currentPlayerType == LudoPlayerType.human &&
         widget.controller.canRoll &&
-        !widget.controller.isRolling) {
+        !widget.controller.isRolling &&
+        !widget.controller.isMoving) {
       widget.controller.rollDice();
     }
   }
@@ -133,6 +134,7 @@ class _LudoBoardWidgetState extends State<LudoBoardWidget> with SingleTickerProv
     final tokens = widget.controller.allTokens;
     final movable = widget.controller.movableTokens;
     final isHuman = widget.controller.currentPlayerType == LudoPlayerType.human;
+    final movingToken = widget.controller.movingToken;
 
     final cellGroups = <String, List<LudoToken>>{};
     for (final token in tokens) {
@@ -143,67 +145,71 @@ class _LudoBoardWidgetState extends State<LudoBoardWidget> with SingleTickerProv
 
     final widgets = <Widget>[];
 
-    for (final entry in cellGroups.entries) {
-      final group = entry.value;
-      for (int i = 0; i < group.length; i++) {
-        final token = group[i];
-        final (x, y) = token.getPosition();
-        final canMove = isHuman && movable.contains(token);
+    for (final token in tokens) {
+      final (x, y) = token.getPosition();
+      final posKey = '${x.toStringAsFixed(1)}_${y.toStringAsFixed(1)}';
+      final group = cellGroups[posKey] ?? [token];
+      final i = group.indexOf(token);
+      final canMove = isHuman && !widget.controller.isMoving && movable.contains(token);
+      final isLifted = movingToken == token;
 
-        double offsetX = 0;
-        double offsetY = 0;
+      double offsetX = 0;
+      double offsetY = 0;
 
-        if (group.length > 1 && !token.isAtYard && !token.isHome) {
-          final shift = cellSize * 0.16;
-          if (group.length == 2) {
-            offsetX = i == 0 ? -shift : shift;
-          } else if (group.length == 3) {
-            offsetX = i == 0 ? -shift : (i == 1 ? shift : 0);
-            offsetY = i == 2 ? shift : -shift * 0.5;
-          } else {
-            offsetX = (i % 2 == 0) ? -shift : shift;
-            offsetY = (i < 2) ? -shift : shift;
-          }
+      if (group.length > 1 && !token.isAtYard && !token.isHome) {
+        final shift = cellSize * 0.16;
+        if (group.length == 2) {
+          offsetX = i == 0 ? -shift : shift;
+        } else if (group.length == 3) {
+          offsetX = i == 0 ? -shift : (i == 1 ? shift : 0);
+          offsetY = i == 2 ? shift : -shift * 0.5;
+        } else {
+          offsetX = (i % 2 == 0) ? -shift : shift;
+          offsetY = (i < 2) ? -shift : shift;
         }
+      }
 
-        final tokenWidth = cellSize * 0.88;
-        final tokenHeight = cellSize * 1.12;
-        final left = x * cellSize + (cellSize - tokenWidth) / 2 + offsetX;
-        final top = y * cellSize + (cellSize / 2) - tokenHeight + 1.5 + offsetY;
+      final tokenWidth = cellSize * 0.88;
+      final tokenHeight = cellSize * 1.12;
+      final left = x * cellSize + (cellSize - tokenWidth) / 2 + offsetX;
+      final top = y * cellSize + (cellSize / 2) - tokenHeight + 1.5 + offsetY;
 
-        widgets.add(
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOutBack,
-            left: left,
-            top: top,
-            width: tokenWidth,
-            height: tokenHeight,
-            child: GestureDetector(
-              onTap: canMove ? () {
-                HapticService.light();
-                widget.controller.moveToken(token);
-              } : null,
-              behavior: HitTestBehavior.opaque,
-              child: AnimatedBuilder(
-                animation: _animController,
-                builder: (context, child) {
-                  final scale = canMove ? 1.0 + (_animController.value * 0.12) : 1.0;
-                  return Transform.scale(
-                    scale: scale,
-                    child: _TokenVisual(
-                      token: token,
-                      isMovable: canMove,
-                      width: tokenWidth,
-                      height: tokenHeight,
-                    ),
-                  );
-                },
-              ),
+      widgets.add(
+        AnimatedPositioned(
+          key: ValueKey('token_${token.player.name}_${token.id}'),
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeInOutCubic,
+          left: left,
+          top: isLifted ? top - (cellSize * 0.22) : top,
+          width: tokenWidth,
+          height: tokenHeight,
+          child: GestureDetector(
+            onTap: canMove ? () {
+              HapticService.light();
+              widget.controller.moveToken(token);
+            } : null,
+            behavior: HitTestBehavior.opaque,
+            child: AnimatedBuilder(
+              animation: _animController,
+              builder: (context, child) {
+                final scale = isLifted
+                    ? 1.22
+                    : (canMove ? 1.0 + (_animController.value * 0.12) : 1.0);
+                return Transform.scale(
+                  scale: scale,
+                  child: _TokenVisual(
+                    token: token,
+                    isMovable: canMove,
+                    isLifted: isLifted,
+                    width: tokenWidth,
+                    height: tokenHeight,
+                  ),
+                );
+              },
             ),
           ),
-        );
-      }
+        ),
+      );
     }
 
     return widgets;
@@ -214,12 +220,14 @@ class _TokenVisual extends StatelessWidget {
   const _TokenVisual({
     required this.token,
     required this.isMovable,
+    this.isLifted = false,
     required this.width,
     required this.height,
   });
 
   final LudoToken token;
   final bool isMovable;
+  final bool isLifted;
   final double width;
   final double height;
 
@@ -235,6 +243,7 @@ class _TokenVisual extends StatelessWidget {
           color: player.color,
           bevelColor: player.bevelColor,
           isMovable: isMovable,
+          isLifted: isLifted,
         ),
       ),
     );
@@ -246,11 +255,13 @@ class _PinPainter extends CustomPainter {
     required this.color,
     required this.bevelColor,
     required this.isMovable,
+    this.isLifted = false,
   });
 
   final Color color;
   final Color bevelColor;
   final bool isMovable;
+  final bool isLifted;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -283,8 +294,9 @@ class _PinPainter extends CustomPainter {
       return p;
     }
 
-    final shadowPath = createPinPath(2.5);
-    final shadowPaint = Paint()..color = bevelColor;
+    final shadowOffsetY = isLifted ? 5.2 : 2.5;
+    final shadowPath = createPinPath(shadowOffsetY);
+    final shadowPaint = Paint()..color = isLifted ? bevelColor.withValues(alpha: 0.55) : bevelColor;
     canvas.drawPath(shadowPath, shadowPaint);
 
     final pinPath = createPinPath(0);

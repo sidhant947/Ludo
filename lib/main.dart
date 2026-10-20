@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'services/audio_service.dart';
 import 'services/haptic_service.dart';
 import 'services/storage_service.dart';
 import 'ui/core/theme/app_theme.dart';
@@ -12,6 +13,7 @@ void main() async {
 
   themeModeNotifier.value = await StorageService.getThemeMode();
   await HapticService.init();
+  await AudioService.init();
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(statusBarColor: Colors.transparent),

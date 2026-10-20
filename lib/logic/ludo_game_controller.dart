@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../models/ludo_models.dart';
+import '../services/audio_service.dart';
 import '../services/haptic_service.dart';
 
 class LudoGameController extends ChangeNotifier {
@@ -27,6 +28,8 @@ class LudoGameController extends ChangeNotifier {
   int _currentPlayerIndex = 0;
   int? _currentDice;
   bool _isRolling = false;
+  bool _isMoving = false;
+  LudoToken? _movingToken;
   bool _canRoll = true;
   List<LudoToken> _movableTokens = [];
   int _consecutiveSixes = 0;
@@ -39,6 +42,8 @@ class LudoGameController extends ChangeNotifier {
   LudoPlayerType get currentPlayerType => playerTypes[currentPlayer]!;
   int? get currentDice => _currentDice;
   bool get isRolling => _isRolling;
+  bool get isMoving => _isMoving;
+  LudoToken? get movingToken => _movingToken;
   bool get canRoll => _canRoll;
   List<LudoToken> get movableTokens => _movableTokens;
   LudoPlayer? get winner => _winner;
@@ -78,6 +83,8 @@ class LudoGameController extends ChangeNotifier {
     _currentPlayerIndex = 0;
     _currentDice = null;
     _isRolling = false;
+    _isMoving = false;
+    _movingToken = null;
     _canRoll = true;
     _movableTokens = [];
     _consecutiveSixes = 0;
@@ -100,13 +107,14 @@ class LudoGameController extends ChangeNotifier {
   }
 
   Future<void> rollDice() async {
-    if (!_canRoll || _isRolling || _isGameOver) return;
+    if (!_canRoll || _isRolling || _isMoving || _isGameOver) return;
     if (_finishedRankings.contains(currentPlayer)) return;
 
     _isRolling = true;
     _movableTokens = [];
     notifyListeners();
     HapticService.selection();
+    AudioService.playDice();
 
     for (int i = 0; i < 6; i++) {
       if (_isDisposed) return;
@@ -181,10 +189,12 @@ class LudoGameController extends ChangeNotifier {
   }
 
   Future<void> moveToken(LudoToken token) async {
-    if (_movableTokens.isEmpty || !_movableTokens.contains(token) || _isRolling || _isGameOver) {
+    if (_movableTokens.isEmpty || !_movableTokens.contains(token) || _isRolling || _isMoving || _isGameOver) {
       return;
     }
 
+    _isMoving = true;
+    _movingToken = token;
     _movableTokens = [];
     final dice = _currentDice!;
     bool bonusTurn = false;
@@ -193,13 +203,27 @@ class LudoGameController extends ChangeNotifier {
       token.step = 0;
       bonusTurn = true;
       HapticService.medium();
+      notifyListeners();
+      await Future.delayed(const Duration(milliseconds: 240));
     } else {
-      token.step += dice;
-      HapticService.light();
+      for (int s = 0; s < dice; s++) {
+        if (_isDisposed) {
+          _isMoving = false;
+          _movingToken = null;
+          return;
+        }
+        token.step++;
+        HapticService.selection();
+        notifyListeners();
+        await Future.delayed(const Duration(milliseconds: 175));
+      }
+
       if (token.step == 56) {
         if (_hasPlayerWon(token.player)) {
           HapticService.vibrate();
           _recordPlayerFinished(token.player);
+          _isMoving = false;
+          _movingToken = null;
           if (_isGameOver) {
             notifyListeners();
             return;
@@ -222,6 +246,8 @@ class LudoGameController extends ChangeNotifier {
             }
             bonusTurn = true;
             HapticService.heavy();
+            notifyListeners();
+            await Future.delayed(const Duration(milliseconds: 260));
           }
         }
       }
@@ -230,6 +256,8 @@ class LudoGameController extends ChangeNotifier {
       }
     }
 
+    _isMoving = false;
+    _movingToken = null;
     notifyListeners();
 
     if (bonusTurn) {
