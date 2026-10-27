@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../logic/ludo_game_controller.dart';
 import '../../../../models/ludo_models.dart';
 import '../../../../services/audio_service.dart';
@@ -82,6 +83,7 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
       barrierDismissible: false,
       builder: (dialogContext) {
         final colors = dialogContext.colors;
+        final l10n = AppLocalizations.of(dialogContext)!;
 
         return Dialog(
           backgroundColor: Colors.transparent,
@@ -121,7 +123,7 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    '${winner.name} Takes #1!',
+                    l10n.playerTakesFirst(winner.localizedName(l10n)),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 24,
@@ -131,7 +133,7 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Match Standings',
+                    l10n.matchStandings,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,
@@ -143,7 +145,7 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
                   ...List.generate(rankings.length, (index) {
                     final player = rankings[index];
                     final isLoss = index == rankings.length - 1;
-                    final rankText = isLoss ? 'Loss' : '#${index + 1}';
+                    final rankText = isLoss ? l10n.rankLoss : l10n.rankPosition(index + 1);
                     final isBot = _controller.playerTypes[player] == LudoPlayerType.bot;
 
                     final Color badgeBg;
@@ -213,7 +215,7 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              '${player.name}${isBot ? ' (Bot)' : ''}',
+                              isBot ? l10n.playerNameWithBot(player.localizedName(l10n)) : player.localizedName(l10n),
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
@@ -243,7 +245,7 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
                       _controller.resetGame();
                     },
                     child: Text(
-                      'Play Again',
+                      l10n.playAgain,
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         color: winner.textColor,
@@ -261,7 +263,7 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
                       Navigator.pop(context);
                     },
                     child: Text(
-                      'Home',
+                      l10n.home,
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         color: colors.text,
@@ -282,6 +284,7 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
       context: context,
       builder: (dialogContext) {
         final colors = dialogContext.colors;
+        final l10n = AppLocalizations.of(dialogContext)!;
 
         return Dialog(
           backgroundColor: Colors.transparent,
@@ -293,7 +296,7 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Leave Game?',
+                  l10n.leaveGameTitle,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 22,
@@ -303,7 +306,7 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Current match progress will be lost.',
+                  l10n.leaveGameMessage,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
@@ -322,7 +325,7 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
                         elevation: 3,
                         onPressed: () => Navigator.pop(dialogContext),
                         child: Text(
-                          'Stay',
+                          l10n.stay,
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
                             color: colors.text,
@@ -342,7 +345,7 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
                           Navigator.pop(context);
                         },
                         child: Text(
-                          'Leave',
+                          l10n.leave,
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
                             color: colors.peachText,
@@ -452,7 +455,7 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
                 Icon(Icons.emoji_events_rounded, size: 16, color: player.color),
                 const SizedBox(width: 4),
                 Text(
-                  '#${rankIdx + 1}',
+                  AppLocalizations.of(context)?.rankPosition(rankIdx + 1) ?? '#${rankIdx + 1}',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w900,

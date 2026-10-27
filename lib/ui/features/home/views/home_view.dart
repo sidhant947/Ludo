@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/tangible_widgets.dart';
 import '../../game/ludo/ludo_game_screen.dart';
@@ -55,6 +56,7 @@ class _HomeViewState extends State<HomeView> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
@@ -96,7 +98,7 @@ class _HomeViewState extends State<HomeView> {
                       const Spacer(),
                       Center(
                         child: Text(
-                          'Ludo',
+                          l10n.appTitle,
                           style: TextStyle(
                             fontSize: 58,
                             fontWeight: FontWeight.w900,
@@ -118,7 +120,7 @@ class _HomeViewState extends State<HomeView> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
-                              'HUMANS',
+                              l10n.humans,
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w800,
@@ -167,7 +169,7 @@ class _HomeViewState extends State<HomeView> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'BOTS',
+                              l10n.bots,
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w800,
@@ -224,7 +226,7 @@ class _HomeViewState extends State<HomeView> {
                         bevelColor: colors.mintBevel,
                         onPressed: _startMatch,
                         child: Text(
-                          'Play',
+                          l10n.play,
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
@@ -244,7 +246,7 @@ class _HomeViewState extends State<HomeView> {
                           );
                         },
                         child: Text(
-                          'Settings',
+                          l10n.settings,
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w800,

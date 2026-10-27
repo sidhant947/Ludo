@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../main.dart';
 import '../../../../services/audio_service.dart';
 import '../../../../services/haptic_service.dart';
@@ -52,6 +53,7 @@ class _SettingsViewState extends State<SettingsView> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
@@ -66,7 +68,7 @@ class _SettingsViewState extends State<SettingsView> {
           ),
         ),
         title: Text(
-          'Settings',
+          l10n.settings,
           style: TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: 24,
@@ -105,7 +107,7 @@ class _SettingsViewState extends State<SettingsView> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Theme / Skin',
+                                l10n.themeSkin,
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800,
@@ -114,7 +116,7 @@ class _SettingsViewState extends State<SettingsView> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'Select app appearance mode',
+                                l10n.themeSubtitle,
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
@@ -131,7 +133,7 @@ class _SettingsViewState extends State<SettingsView> {
                       children: [
                         Expanded(
                           child: _buildThemeOption(
-                            label: 'Light',
+                            label: l10n.light,
                             icon: Icons.light_mode_rounded,
                             mode: ThemeMode.light,
                             colors: colors,
@@ -140,7 +142,7 @@ class _SettingsViewState extends State<SettingsView> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: _buildThemeOption(
-                            label: 'Dark',
+                            label: l10n.dark,
                             icon: Icons.dark_mode_rounded,
                             mode: ThemeMode.dark,
                             colors: colors,
@@ -149,7 +151,7 @@ class _SettingsViewState extends State<SettingsView> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: _buildThemeOption(
-                            label: 'System',
+                            label: l10n.system,
                             icon: Icons.brightness_auto_rounded,
                             mode: ThemeMode.system,
                             colors: colors,
@@ -183,7 +185,7 @@ class _SettingsViewState extends State<SettingsView> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Haptic Feedback',
+                            l10n.hapticFeedback,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
@@ -192,7 +194,7 @@ class _SettingsViewState extends State<SettingsView> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Vibrate on dice, moves & taps',
+                            l10n.hapticSubtitle,
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
@@ -211,7 +213,7 @@ class _SettingsViewState extends State<SettingsView> {
                       elevation: 3,
                       onPressed: () => _toggleHaptics(!_hapticEnabled),
                       child: Text(
-                        _hapticEnabled ? 'ON' : 'OFF',
+                        _hapticEnabled ? l10n.on : l10n.off,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w900,
@@ -245,7 +247,7 @@ class _SettingsViewState extends State<SettingsView> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Sound',
+                            l10n.sound,
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
@@ -254,7 +256,7 @@ class _SettingsViewState extends State<SettingsView> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Music and dice audio',
+                            l10n.soundSubtitle,
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
@@ -273,7 +275,7 @@ class _SettingsViewState extends State<SettingsView> {
                       elevation: 3,
                       onPressed: () => _toggleSound(!_soundEnabled),
                       child: Text(
-                        _soundEnabled ? 'ON' : 'OFF',
+                        _soundEnabled ? l10n.on : l10n.off,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w900,

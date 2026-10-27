@@ -1,0 +1,54 @@
+{
+  "appTitle": "Ludo",
+  "humans": "HUMANS",
+  "bots": "BOTS",
+  "play": "Play",
+  "settings": "Settings",
+  "themeSkin": "Theme / Skin",
+  "themeSubtitle": "Select app appearance mode",
+  "light": "Light",
+  "dark": "Dark",
+  "system": "System",
+  "hapticFeedback": "Haptic Feedback",
+  "hapticSubtitle": "Vibrate on dice, moves & taps",
+  "sound": "Sound",
+  "soundSubtitle": "Music and dice audio",
+  "on": "ON",
+  "off": "OFF",
+  "playerTakesFirst": "{playerName} Takes #1!",
+  "@playerTakesFirst": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "matchStandings": "Match Standings",
+  "rankLoss": "Loss",
+  "rankPosition": "#{rank}",
+  "@rankPosition": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      }
+    }
+  },
+  "playerNameWithBot": "{playerName} (Bot)",
+  "@playerNameWithBot": {
+    "placeholders": {
+      "playerName": {
+        "type": "String"
+      }
+    }
+  },
+  "playAgain": "Play Again",
+  "home": "Home",
+  "leaveGameTitle": "Leave Game?",
+  "leaveGameMessage": "Current match progress will be lost.",
+  "stay": "Stay",
+  "leave": "Leave",
+  "playerRed": "Red",
+  "playerGreen": "Green",
+  "playerYellow": "Yellow",
+  "playerBlue": "Blue"
+}

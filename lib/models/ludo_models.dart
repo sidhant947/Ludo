@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 
 enum LudoPlayerType { human, bot }
 
@@ -63,6 +64,21 @@ enum LudoPlayer {
   final List<(double, double)> yardCoords;
   final List<(int, int)> homeCoords;
   final (double, double) centerCoord;
+}
+
+extension LudoPlayerLocalization on LudoPlayer {
+  String localizedName(AppLocalizations l10n) {
+    switch (this) {
+      case LudoPlayer.red:
+        return l10n.playerRed;
+      case LudoPlayer.green:
+        return l10n.playerGreen;
+      case LudoPlayer.yellow:
+        return l10n.playerYellow;
+      case LudoPlayer.blue:
+        return l10n.playerBlue;
+    }
+  }
 }
 
 class LudoTrack {
