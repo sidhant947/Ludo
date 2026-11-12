@@ -50,5 +50,9 @@
   "playerRed": "Red",
   "playerGreen": "Green",
   "playerYellow": "Yellow",
-  "playerBlue": "Blue"
+  "playerBlue": "Blue",
+  "gameSetup": "Game Setup",
+  "startGame": "Start Game",
+  "colors": "Colors",
+  "players": "Players"
 }

@@ -15,6 +15,9 @@ class LudoGameScreen extends StatefulWidget {
     this.vsBot,
     this.humanCount,
     this.botCount,
+    this.activePlayers,
+    this.playerTypes,
+    this.playerNames,
     this.controller,
   });
 
@@ -22,6 +25,9 @@ class LudoGameScreen extends StatefulWidget {
   final bool? vsBot;
   final int? humanCount;
   final int? botCount;
+  final List<LudoPlayer>? activePlayers;
+  final Map<LudoPlayer, LudoPlayerType>? playerTypes;
+  final Map<LudoPlayer, String>? playerNames;
   final LudoGameController? controller;
 
   @override
@@ -46,6 +52,9 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
       botCount: widget.botCount,
       playerCount: widget.playerCount,
       vsBot: widget.vsBot,
+      activePlayers: widget.activePlayers,
+      playerTypes: widget.playerTypes,
+      playerNames: widget.playerNames,
     );
     _controller.addListener(_onControllerUpdate);
     AudioService.setGameplay(true);
@@ -123,7 +132,7 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    l10n.playerTakesFirst(winner.localizedName(l10n)),
+                    l10n.playerTakesFirst(_controller.getPlayerName(winner, l10n)),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 24,
@@ -215,7 +224,7 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              isBot ? l10n.playerNameWithBot(player.localizedName(l10n)) : player.localizedName(l10n),
+                              isBot ? l10n.playerNameWithBot(_controller.getPlayerName(player, l10n)) : _controller.getPlayerName(player, l10n),
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
@@ -435,35 +444,58 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
       return SizedBox(width: width, height: 50);
     }
 
+    final l10n = AppLocalizations.of(context);
+    final playerName = _controller.getPlayerName(player, l10n);
+    final isLeft = player == LudoPlayer.green || player == LudoPlayer.red;
+
     final hasFinished = _controller.hasPlayerFinished(player);
     final rankIdx = _controller.rankings.indexOf(player);
     if (hasFinished && rankIdx != -1 && rankIdx < _controller.rankings.length - 1) {
+      final finishedBadge = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: player.color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: player.color, width: 2),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.emoji_events_rounded, size: 16, color: player.color),
+            const SizedBox(width: 4),
+            Text(
+              l10n?.rankPosition(rankIdx + 1) ?? '#${rankIdx + 1}',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+                color: colors.text,
+              ),
+            ),
+          ],
+        ),
+      );
+
+      final nameWidget = Text(
+        playerName,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: isLeft ? TextAlign.start : TextAlign.end,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: colors.textMuted,
+        ),
+      );
+
       return SizedBox(
         width: width,
         height: 50,
         child: Center(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: player.color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: player.color, width: 2),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.emoji_events_rounded, size: 16, color: player.color),
-                const SizedBox(width: 4),
-                Text(
-                  AppLocalizations.of(context)?.rankPosition(rankIdx + 1) ?? '#${rankIdx + 1}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    color: colors.text,
-                  ),
-                ),
-              ],
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: isLeft
+                ? [finishedBadge, const SizedBox(width: 6), Flexible(child: nameWidget)]
+                : [Flexible(child: nameWidget), const SizedBox(width: 6), finishedBadge],
           ),
         ),
       );
@@ -492,36 +524,55 @@ class _LudoGameScreenState extends State<LudoGameScreen> with SingleTickerProvid
       onTap: canRoll ? () => _controller.rollDice() : null,
     );
 
+    final diceWithBadge = isBot
+        ? Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              diceButton,
+              Positioned(
+                right: -4,
+                top: -4,
+                child: Container(
+                  padding: const EdgeInsets.all(2.5),
+                  decoration: BoxDecoration(
+                    color: colors.card,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: colors.border, width: 1.5),
+                  ),
+                  child: Icon(
+                    Icons.smart_toy_rounded,
+                    size: 11,
+                    color: colors.textMuted,
+                  ),
+                ),
+              ),
+            ],
+          )
+        : diceButton;
+
+    final nameWidget = Text(
+      playerName,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: isLeft ? TextAlign.start : TextAlign.end,
+      style: TextStyle(
+        fontSize: 13,
+        fontWeight: isCurrent ? FontWeight.w900 : FontWeight.w700,
+        color: isCurrent ? player.color : colors.textMuted,
+      ),
+    );
+
     return SizedBox(
       width: width,
       height: 50,
       child: Center(
-        child: isBot
-            ? Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.center,
-                children: [
-                  diceButton,
-                  Positioned(
-                    right: -4,
-                    top: -4,
-                    child: Container(
-                      padding: const EdgeInsets.all(2.5),
-                      decoration: BoxDecoration(
-                        color: colors.card,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: colors.border, width: 1.5),
-                      ),
-                      child: Icon(
-                        Icons.smart_toy_rounded,
-                        size: 11,
-                        color: colors.textMuted,
-                      ),
-                    ),
-                  ),
-                ],
-              )
-            : diceButton,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: isLeft
+              ? [diceWithBadge, const SizedBox(width: 6), Flexible(child: nameWidget)]
+              : [Flexible(child: nameWidget), const SizedBox(width: 6), diceWithBadge],
+        ),
       ),
     );
   }

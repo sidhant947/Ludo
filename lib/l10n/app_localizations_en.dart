@@ -107,4 +107,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get playerBlue => 'Blue';
+
+  @override
+  String get gameSetup => 'Game Setup';
+
+  @override
+  String get startGame => 'Start Game';
+
+  @override
+  String get colors => 'Colors';
+
+  @override
+  String get players => 'Players';
 }

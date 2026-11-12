@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../models/ludo_models.dart';
 import '../services/audio_service.dart';
 import '../services/haptic_service.dart';
@@ -11,10 +12,19 @@ class LudoGameController extends ChangeNotifier {
     int? botCount,
     int? playerCount,
     bool? vsBot,
+    List<LudoPlayer>? activePlayers,
+    Map<LudoPlayer, LudoPlayerType>? playerTypes,
+    Map<LudoPlayer, String>? playerNames,
   }) {
     final humans = humanCount ?? (vsBot == true ? 1 : (playerCount ?? 4));
     final bots = botCount ?? (vsBot == true ? (playerCount ?? 4) - 1 : 0);
-    _initGame(humans, bots);
+    _initGame(
+      humans,
+      bots,
+      customActivePlayers: activePlayers,
+      customPlayerTypes: playerTypes,
+      customPlayerNames: playerNames,
+    );
   }
 
   late int humanCount;
@@ -22,6 +32,7 @@ class LudoGameController extends ChangeNotifier {
   final Random _random = Random();
   late List<LudoPlayer> activePlayers;
   late Map<LudoPlayer, LudoPlayerType> playerTypes;
+  late Map<LudoPlayer, String> playerNames;
   late List<LudoToken> allTokens;
   late Map<LudoPlayer, int> playerDice;
 
@@ -53,23 +64,47 @@ class LudoGameController extends ChangeNotifier {
 
   int getDiceFor(LudoPlayer player) => playerDice[player] ?? 1;
 
-  void _initGame(int humans, int bots) {
+  String getPlayerName(LudoPlayer player, [AppLocalizations? l10n]) {
+    final custom = playerNames[player];
+    if (custom != null && custom.trim().isNotEmpty) {
+      return custom.trim();
+    }
+    return l10n != null ? player.localizedName(l10n) : player.name;
+  }
+
+  void _initGame(
+    int humans,
+    int bots, {
+    List<LudoPlayer>? customActivePlayers,
+    Map<LudoPlayer, LudoPlayerType>? customPlayerTypes,
+    Map<LudoPlayer, String>? customPlayerNames,
+  }) {
     humanCount = humans;
     botCount = bots;
-    final count = (humans + bots).clamp(2, 4);
-    if (count == 2) {
-      activePlayers = [LudoPlayer.red, LudoPlayer.yellow];
-    } else if (count == 3) {
-      activePlayers = [LudoPlayer.red, LudoPlayer.green, LudoPlayer.yellow];
+    if (customActivePlayers != null && customActivePlayers.isNotEmpty) {
+      activePlayers = List.from(customActivePlayers);
     } else {
-      activePlayers = [LudoPlayer.red, LudoPlayer.green, LudoPlayer.yellow, LudoPlayer.blue];
+      final count = (humans + bots).clamp(2, 4);
+      if (count == 2) {
+        activePlayers = [LudoPlayer.red, LudoPlayer.yellow];
+      } else if (count == 3) {
+        activePlayers = [LudoPlayer.red, LudoPlayer.green, LudoPlayer.yellow];
+      } else {
+        activePlayers = [LudoPlayer.red, LudoPlayer.green, LudoPlayer.yellow, LudoPlayer.blue];
+      }
     }
 
-    playerTypes = {};
-    for (int i = 0; i < activePlayers.length; i++) {
-      final p = activePlayers[i];
-      playerTypes[p] = i < humans ? LudoPlayerType.human : LudoPlayerType.bot;
+    if (customPlayerTypes != null) {
+      playerTypes = Map.from(customPlayerTypes);
+    } else {
+      playerTypes = {};
+      for (int i = 0; i < activePlayers.length; i++) {
+        final p = activePlayers[i];
+        playerTypes[p] = i < humans ? LudoPlayerType.human : LudoPlayerType.bot;
+      }
     }
+
+    playerNames = customPlayerNames != null ? Map.from(customPlayerNames) : {};
 
     allTokens = [];
     for (final p in activePlayers) {
@@ -95,10 +130,24 @@ class LudoGameController extends ChangeNotifier {
     _checkBotTurn();
   }
 
-  void resetGame({int? humanCount, int? botCount, int? playerCount, bool? vsBot}) {
+  void resetGame({
+    int? humanCount,
+    int? botCount,
+    int? playerCount,
+    bool? vsBot,
+    List<LudoPlayer>? activePlayers,
+    Map<LudoPlayer, LudoPlayerType>? playerTypes,
+    Map<LudoPlayer, String>? playerNames,
+  }) {
     final humans = humanCount ?? (vsBot != null ? (vsBot ? 1 : (playerCount ?? this.humanCount)) : this.humanCount);
     final bots = botCount ?? (vsBot != null ? (vsBot ? (playerCount ?? (this.humanCount + this.botCount)) - 1 : 0) : this.botCount);
-    _initGame(humans, bots);
+    _initGame(
+      humans,
+      bots,
+      customActivePlayers: activePlayers ?? this.activePlayers,
+      customPlayerTypes: playerTypes ?? this.playerTypes,
+      customPlayerNames: playerNames ?? this.playerNames,
+    );
     notifyListeners();
   }
 

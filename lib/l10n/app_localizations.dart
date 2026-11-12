@@ -279,6 +279,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Blue'**
   String get playerBlue;
+
+  /// No description provided for @gameSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Game Setup'**
+  String get gameSetup;
+
+  /// No description provided for @startGame.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Game'**
+  String get startGame;
+
+  /// No description provided for @colors.
+  ///
+  /// In en, this message translates to:
+  /// **'Colors'**
+  String get colors;
+
+  /// No description provided for @players.
+  ///
+  /// In en, this message translates to:
+  /// **'Players'**
+  String get players;
 }
 
 class _AppLocalizationsDelegate
